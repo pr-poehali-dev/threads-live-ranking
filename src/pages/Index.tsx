@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import Icon from '@/components/ui/icon';
+import { useAuth } from '@/contexts/AuthContext';
+import AuthDialog from '@/components/AuthDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type Metric = 'likes' | 'reposts' | 'comments';
 
@@ -47,6 +55,8 @@ function jitter(value: number) {
 }
 
 const Index = () => {
+  const { user, logout } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
   const [region, setRegion] = useState('all');
   const [sort, setSort] = useState<Metric>('likes');
   const [posts, setPosts] = useState<Post[]>(SEED);
@@ -84,8 +94,13 @@ const Index = () => {
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
   const ss = String(secondsLeft % 60).padStart(2, '0');
 
-  const toggleSave = (id: number) =>
+  const toggleSave = (id: number) => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
     setSaved((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -102,9 +117,33 @@ const Index = () => {
               <span className="w-2 h-2 rounded-full bg-accent ticker-dot" />
               <span className="text-muted-foreground">в эфире</span>
             </div>
-            <button className="px-4 py-2 rounded-full bg-foreground text-background font-medium hover:opacity-90 transition">
-              Войти
-            </button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card hover:border-foreground/40 transition outline-none">
+                  <span className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-semibold text-xs uppercase">
+                    {user.name?.[0] || user.email[0]}
+                  </span>
+                  <span className="hidden sm:inline font-medium max-w-[120px] truncate">{user.name || user.email}</span>
+                  <Icon name="ChevronDown" size={15} className="text-muted-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="text-muted-foreground text-xs pointer-events-none">
+                    {user.email}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={logout} className="cursor-pointer">
+                    <Icon name="LogOut" size={15} className="mr-2" />
+                    Выйти
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <button
+                onClick={() => setAuthOpen(true)}
+                className="px-4 py-2 rounded-full bg-foreground text-background font-medium hover:opacity-90 transition"
+              >
+                Войти
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -225,6 +264,8 @@ const Index = () => {
           <span>Рейтинг обновляется автоматически каждые 5 минут</span>
         </div>
       </footer>
+
+      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} />
     </div>
   );
 };

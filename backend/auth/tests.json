@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Register requires valid email",
+      "method": "POST",
+      "path": "/?action=register",
+      "body": {"email": "bad", "password": "123456"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Login requires existing user",
+      "method": "POST",
+      "path": "/?action=login",
+      "body": {"email": "nouser@example.com", "password": "123456"},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
