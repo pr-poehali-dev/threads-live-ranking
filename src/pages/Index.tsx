@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from '@/components/ui/icon';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthDialog from '@/components/AuthDialog';
@@ -117,8 +117,8 @@ const avatarUrl = (handle: string) =>
   `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(handle)}&backgroundColor=ffd5a6,b6e3f4,c0aede,d1d4f9,ffdfbf`;
 
 function jitter(value: number) {
-  const delta = Math.round(value * (Math.random() * 0.04));
-  return value + delta;
+  const delta = Math.round(value * (Math.random() * 0.24 - 0.06));
+  return Math.max(1000, value + delta);
 }
 
 const Index = () => {
@@ -130,25 +130,37 @@ const Index = () => {
   const [posts, setPosts] = useState<Post[]>(SEED);
   const [saved, setSaved] = useState<number[]>([]);
   const [secondsLeft, setSecondsLeft] = useState(300);
+  const [refreshing, setRefreshing] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Date>(new Date());
+
+  const refresh = useCallback(() => {
+    setRefreshing(true);
+    setPosts((prev) =>
+      prev.map((p) => ({
+        ...p,
+        likes: jitter(p.likes),
+        reposts: jitter(p.reposts),
+        comments: jitter(p.comments),
+        minutesAgo: Math.max(1, Math.round(1 + Math.random() * 14)),
+      })),
+    );
+    setUpdatedAt(new Date());
+    setSecondsLeft(300);
+    setTimeout(() => setRefreshing(false), 600);
+  }, []);
 
   useEffect(() => {
     const tick = setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
-          setPosts((prev) => prev.map((p) => ({
-            ...p,
-            likes: jitter(p.likes),
-            reposts: jitter(p.reposts),
-            comments: jitter(p.comments),
-            minutesAgo: Math.max(1, p.minutesAgo - 1),
-          })));
+          refresh();
           return 300;
         }
         return s - 1;
       });
     }, 1000);
     return () => clearInterval(tick);
-  }, []);
+  }, [refresh]);
 
   const visible = useMemo(() => {
     return [...posts]
@@ -227,10 +239,20 @@ const Index = () => {
         </p>
 
         {period === '5min' ? (
-          <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-border bg-card px-5 py-3">
-            <Icon name="RefreshCw" size={18} className="text-accent" />
-            <span className="text-sm text-muted-foreground">Следующее обновление через</span>
-            <span className="font-display font-semibold text-lg tabular-nums">{mm}:{ss}</span>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-3 rounded-full border border-border bg-card px-5 py-3">
+              <Icon name="RefreshCw" size={18} className={`text-accent ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="text-sm text-muted-foreground">Следующее обновление через</span>
+              <span className="font-display font-semibold text-lg tabular-nums">{mm}:{ss}</span>
+            </div>
+            <button
+              onClick={refresh}
+              disabled={refreshing}
+              className="inline-flex items-center gap-2 rounded-full bg-accent text-accent-foreground px-5 py-3 font-medium hover:opacity-90 transition disabled:opacity-60"
+            >
+              <Icon name="RotateCw" size={18} className={refreshing ? 'animate-spin' : ''} />
+              {refreshing ? 'Обновляем…' : 'Обновить сейчас'}
+            </button>
           </div>
         ) : (
           <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-border bg-card px-5 py-3">
