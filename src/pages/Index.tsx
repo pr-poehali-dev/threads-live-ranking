@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 type Metric = 'likes' | 'reposts' | 'comments';
+type Period = '5min' | 'day' | 'week' | 'halfyear' | 'year';
 
 interface Post {
   id: number;
@@ -22,6 +23,7 @@ interface Post {
   reposts: number;
   comments: number;
   minutesAgo: number;
+  period: Period;
 }
 
 const REGIONS = [
@@ -38,16 +40,81 @@ const SORTS: { code: Metric; label: string; icon: string }[] = [
   { code: 'comments', label: 'Комментарии', icon: 'MessageCircle' },
 ];
 
-const SEED: Post[] = [
-  { id: 1, author: 'Алиса Громова', handle: 'alisa.codes', region: 'ru', flag: '🇷🇺', text: 'Только что запустила свой первый pet-проект на выходных. Оказалось, что главное — просто начать, а не ждать идеального момента.', likes: 48200, reposts: 9100, comments: 3400, minutesAgo: 4 },
-  { id: 2, author: 'Marcus Lee', handle: 'marcusbuilds', region: 'us', flag: '🇺🇸', text: 'Hot take: most productivity apps make you less productive. The best tool is a single sheet of paper.', likes: 91300, reposts: 21000, comments: 12800, minutesAgo: 2 },
-  { id: 3, author: 'Sofia Rossi', handle: 'sofia.design', region: 'eu', flag: '🇮🇹', text: 'Design is not decoration. It is how something works when nobody is explaining it to you.', likes: 67400, reposts: 15600, comments: 5200, minutesAgo: 7 },
-  { id: 4, author: 'Кенжи Танака', handle: 'kenji.t', region: 'asia', flag: '🇯🇵', text: 'Утренняя прогулка вместо ленты новостей. Третий день — и мозг будто стал тише. Рекомендую каждому.', likes: 38900, reposts: 7800, comments: 2900, minutesAgo: 11 },
-  { id: 5, author: 'Дмитрий Орлов', handle: 'orlov.invest', region: 'ru', flag: '🇷🇺', text: 'Финансовая подушка — это не про деньги. Это про возможность спокойно сказать «нет».', likes: 55100, reposts: 12300, comments: 4100, minutesAgo: 9 },
-  { id: 6, author: 'Emma Clark', handle: 'emma.writes', region: 'us', flag: '🇺🇸', text: 'Wrote 500 words today. They were bad. But bad words can be edited — blank pages cannot.', likes: 73600, reposts: 18400, comments: 8700, minutesAgo: 5 },
-  { id: 7, author: 'Lukas Berg', handle: 'lukas.eu', region: 'eu', flag: '🇩🇪', text: 'Поезд опоздал на 40 минут — и я прочитал целую главу книги, которую откладывал месяцами. Иногда задержки это подарок.', likes: 29800, reposts: 5600, comments: 1900, minutesAgo: 14 },
-  { id: 8, author: 'Mei Chen', handle: 'mei.chen', region: 'asia', flag: '🇸🇬', text: 'Стартап — это марафон, который все почему-то бегут как спринт. Берегите себя, фаундеры.', likes: 61200, reposts: 14100, comments: 6300, minutesAgo: 6 },
+const PERIODS: { code: Period; label: string }[] = [
+  { code: '5min', label: '5 минут' },
+  { code: 'day', label: 'День' },
+  { code: 'week', label: 'Неделя' },
+  { code: 'halfyear', label: 'Полгода' },
+  { code: 'year', label: 'Год' },
 ];
+
+const NAMES: { author: string; handle: string; region: string; flag: string }[] = [
+  { author: 'Алиса Громова', handle: 'alisa.codes', region: 'ru', flag: '🇷🇺' },
+  { author: 'Marcus Lee', handle: 'marcusbuilds', region: 'us', flag: '🇺🇸' },
+  { author: 'Sofia Rossi', handle: 'sofia.design', region: 'eu', flag: '🇮🇹' },
+  { author: 'Кенжи Танака', handle: 'kenji.t', region: 'asia', flag: '🇯🇵' },
+  { author: 'Дмитрий Орлов', handle: 'orlov.invest', region: 'ru', flag: '🇷🇺' },
+  { author: 'Emma Clark', handle: 'emma.writes', region: 'us', flag: '🇺🇸' },
+  { author: 'Lukas Berg', handle: 'lukas.eu', region: 'eu', flag: '🇩🇪' },
+  { author: 'Mei Chen', handle: 'mei.chen', region: 'asia', flag: '🇸🇬' },
+  { author: 'Карина Соколова', handle: 'karina.s', region: 'ru', flag: '🇷🇺' },
+  { author: 'James Wright', handle: 'jwright', region: 'us', flag: '🇺🇸' },
+  { author: 'Олег Петров', handle: 'oleg.dev', region: 'ru', flag: '🇷🇺' },
+  { author: 'Nina Kovač', handle: 'nina.k', region: 'eu', flag: '🇭🇷' },
+  { author: 'Хёна Ким', handle: 'hyena.kim', region: 'asia', flag: '🇰🇷' },
+  { author: 'Olivia Park', handle: 'olivia.p', region: 'us', flag: '🇺🇸' },
+  { author: 'Антон Белов', handle: 'belov.photo', region: 'ru', flag: '🇷🇺' },
+  { author: 'Pablo García', handle: 'pablo.g', region: 'eu', flag: '🇪🇸' },
+  { author: 'Aarav Sharma', handle: 'aarav.s', region: 'asia', flag: '🇮🇳' },
+  { author: 'Мария Зайцева', handle: 'masha.z', region: 'ru', flag: '🇷🇺' },
+  { author: 'Tom Baker', handle: 'tombakes', region: 'us', flag: '🇺🇸' },
+  { author: 'Léa Dubois', handle: 'lea.d', region: 'eu', flag: '🇫🇷' },
+];
+
+const TEXTS = [
+  'Только что запустила свой первый pet-проект на выходных. Главное — просто начать, а не ждать идеального момента.',
+  'Hot take: most productivity apps make you less productive. The best tool is a single sheet of paper.',
+  'Design is not decoration. It is how something works when nobody is explaining it to you.',
+  'Утренняя прогулка вместо ленты новостей. Третий день — и мозг будто стал тише.',
+  'Финансовая подушка — это не про деньги. Это про возможность спокойно сказать «нет».',
+  'Wrote 500 words today. They were bad. But bad words can be edited — blank pages cannot.',
+  'Поезд опоздал на 40 минут — и я прочитал целую главу книги. Иногда задержки это подарок.',
+  'Стартап — это марафон, который все почему-то бегут как спринт. Берегите себя, фаундеры.',
+  'Перестала проверять почту по утрам. Продуктивность выросла, тревожность упала.',
+  'The hardest part of any project is deciding it is good enough to ship.',
+  'Завёл привычку записывать одну хорошую вещь за день. Через месяц перечитал — будто другая жизнь.',
+  'Минимализм — это не про пустые полки. Это про то, чтобы каждая вещь имела смысл.',
+  '집중력은 근육과 같다. 매일 조금씩 훈련하면 강해진다.',
+  'Stopped multitasking for a week. Turns out I was just doing many things badly at once.',
+  'Снял на плёнку целое лето. Проявил только сейчас — и каждый кадр как маленькая машина времени.',
+  'La mejor inversión no es en cripto, es en aprender a decir que no.',
+  'Read 20 pages before opening any app. Small rule, huge difference.',
+  'Уволилась с работы мечты, чтобы построить свою. Страшно, но впервые за годы — честно.',
+  'Cooking is just chemistry you are allowed to eat. Embrace the experiments.',
+  'Le silence du matin vaut mille notifications. Essayez, juste une semaine.',
+];
+
+const SEED: Post[] = Array.from({ length: 20 }, (_, i) => {
+  const person = NAMES[i];
+  const period = PERIODS[i % PERIODS.length].code;
+  const base = 18000 + Math.round(Math.random() * 90000);
+  return {
+    id: i + 1,
+    author: person.author,
+    handle: person.handle,
+    region: person.region,
+    flag: person.flag,
+    text: TEXTS[i],
+    likes: base,
+    reposts: Math.round(base * (0.15 + Math.random() * 0.2)),
+    comments: Math.round(base * (0.05 + Math.random() * 0.12)),
+    minutesAgo: 1 + Math.round(Math.random() * 14),
+    period,
+  };
+});
+
+const avatarUrl = (handle: string) =>
+  `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(handle)}&backgroundColor=ffd5a6,b6e3f4,c0aede,d1d4f9,ffdfbf`;
 
 function jitter(value: number) {
   const delta = Math.round(value * (Math.random() * 0.04));
@@ -59,6 +126,7 @@ const Index = () => {
   const [authOpen, setAuthOpen] = useState(false);
   const [region, setRegion] = useState('all');
   const [sort, setSort] = useState<Metric>('likes');
+  const [period, setPeriod] = useState<Period>('5min');
   const [posts, setPosts] = useState<Post[]>(SEED);
   const [saved, setSaved] = useState<number[]>([]);
   const [secondsLeft, setSecondsLeft] = useState(300);
@@ -85,8 +153,9 @@ const Index = () => {
   const visible = useMemo(() => {
     return [...posts]
       .filter((p) => region === 'all' || p.region === region)
+      .filter((p) => period === '5min' || p.period === period)
       .sort((a, b) => b[sort] - a[sort]);
-  }, [posts, region, sort]);
+  }, [posts, region, sort, period]);
 
   const fmt = (n: number) =>
     n >= 1000 ? `${(n / 1000).toFixed(1).replace('.0', '')}K` : `${n}`;
@@ -157,14 +226,42 @@ const Index = () => {
           Живой рейтинг популярных постов Threads. Фильтруйте по географии, ранжируйте по реакциям. Обновление каждые 5 минут.
         </p>
 
-        <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-border bg-card px-5 py-3">
-          <Icon name="RefreshCw" size={18} className="text-accent" />
-          <span className="text-sm text-muted-foreground">Следующее обновление через</span>
-          <span className="font-display font-semibold text-lg tabular-nums">{mm}:{ss}</span>
-        </div>
+        {period === '5min' ? (
+          <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-border bg-card px-5 py-3">
+            <Icon name="RefreshCw" size={18} className="text-accent" />
+            <span className="text-sm text-muted-foreground">Следующее обновление через</span>
+            <span className="font-display font-semibold text-lg tabular-nums">{mm}:{ss}</span>
+          </div>
+        ) : (
+          <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-border bg-card px-5 py-3">
+            <Icon name="TrendingUp" size={18} className="text-accent" />
+            <span className="text-sm text-muted-foreground">
+              Рейтинг за период: <span className="font-semibold text-foreground">{PERIODS.find((x) => x.code === period)?.label}</span>
+            </span>
+          </div>
+        )}
       </section>
 
       <section className="container max-w-5xl">
+        <div className="flex flex-wrap gap-1.5 p-1.5 rounded-2xl bg-secondary">
+          {PERIODS.map((pr) => (
+            <button
+              key={pr.code}
+              onClick={() => setPeriod(pr.code)}
+              className={`flex-1 min-w-[80px] px-4 py-2.5 rounded-xl text-sm font-medium transition ${
+                period === pr.code
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {pr.code === '5min' && <Icon name="Radio" size={14} className="inline mr-1.5 -mt-0.5" />}
+              {pr.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="container max-w-5xl mt-4">
         <div className="flex flex-col gap-4 border-y border-border py-5 sticky top-[73px] z-10 bg-background/85 backdrop-blur-md">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs uppercase tracking-wide text-muted-foreground mr-1 w-full sm:w-auto">География</span>
@@ -210,14 +307,22 @@ const Index = () => {
               style={{ animationDelay: `${i * 50}ms` }}
             >
               <div className="flex items-start gap-4">
-                <span className="font-display font-bold text-3xl text-muted-foreground/40 w-10 shrink-0 tabular-nums leading-none pt-1">
+                <span className="font-display font-bold text-3xl text-muted-foreground/40 w-8 shrink-0 tabular-nums leading-none pt-1">
                   {String(i + 1).padStart(2, '0')}
                 </span>
+                <img
+                  src={avatarUrl(p.handle)}
+                  alt={p.author}
+                  loading="lazy"
+                  className="w-11 h-11 rounded-full shrink-0 bg-secondary object-cover ring-1 ring-border"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="font-semibold">{p.author}</span>
                     <span className="text-muted-foreground text-sm">@{p.handle}</span>
-                    <span className="text-muted-foreground text-sm">· {p.minutesAgo} мин</span>
+                    {period === '5min' && (
+                      <span className="text-muted-foreground text-sm">· {p.minutesAgo} мин</span>
+                    )}
                     <span className="ml-auto text-lg" title={p.region}>{p.flag}</span>
                   </div>
                   <p className="text-foreground/90 leading-relaxed">{p.text}</p>
@@ -247,7 +352,7 @@ const Index = () => {
           {visible.length === 0 && (
             <div className="text-center py-20 text-muted-foreground">
               <Icon name="SearchX" size={40} className="mx-auto mb-3 opacity-50" />
-              Постов из этого региона пока нет
+              За этот период и регион постов пока нет
             </div>
           )}
         </div>
